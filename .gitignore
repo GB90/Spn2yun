@@ -1,23 +1,6 @@
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
-
-# Libraries
-*.lib
-*.a
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+/MDK/DebugConfig/*
+/MDK/Listings/*
+/MDK/Objects/*
+#/STM32F10x_StdPeriph_Lib/src/*
+#/STM32F10x_StdPeriph_Lib/inc/*
+#/STM32F10x_StdPeriph_Lib/*
