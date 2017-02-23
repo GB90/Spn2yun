@@ -17,8 +17,8 @@
 #include "BIO.h"
 #include "iwdg.h"
 
-//#define __Debug__                                         //测试选项
-#define LCDBACK         25                                  //背光亮度0~99
+//#define __Debug__                                         //测试选项 10% 约 7mA
+#define LCDBACK         40                                  //背光亮度0~99
 #define DISTEMP         0                                   //温度显示      0:不显示        1:显示
 #define SOFTLOCK        0                                   //软件锁        0:无效          1:有效
 #define MB_MODE         1                                   //modbus模式    0:带超时读写    1:只读 2:无

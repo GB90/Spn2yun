@@ -30,7 +30,7 @@ int main(void)
 	GetDataFromFlash();			//恢复已经保存的数据
     LCD_Init();          		//初始化LCD(160160)
 	T_Adc_Init();
-	TIM2_Int_Init(99,7199);		//10ms  
+	TIM2_Int_Init(99,719);		//10ms  
 	TIM3_PWM_Init(4095,150);	//PWM频率=100hz
 	TIM1_Int_Init(1000,360);
 	IO_Init();
@@ -38,9 +38,7 @@ int main(void)
 	//GetDataFromFlash();		//恢复已经保存的数据
 	Display_Init();
 	clear_screen();
-	LCD_Back = 0;
 	ModBusDataInit();               //初始化WMbData值
-    //TIM_SetCompare1(TIM2,LCDBACK);
  	while(1)
 	{
 		IWDG_feed();		    //喂狗

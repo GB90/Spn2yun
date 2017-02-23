@@ -3,8 +3,6 @@
 #define __LCD_160160_H__
 #include "sys.h"
 
-#define LCD_Back PAout(15)// 背光控制	
-
 extern const u8 XZYE_8x9[];
 extern const u8 WXYE_8x9[];
 //字符定义:

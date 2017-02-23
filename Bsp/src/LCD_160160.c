@@ -18,8 +18,6 @@
 #define wr PDout(14)// PD14,WR0	
 #define reset PDout(15)//PD15,LCD_RST// LCD复位	
 
-#define LCD_Back PAout(15)// 背光控制	
-
 u8 BCD_buffer[6];								//BCD码存放区(BCD_buffer[0]为个位)
 
 void hextobcd(u32 hexs);
@@ -126,12 +124,6 @@ void LCDPort_Init(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;		 //
 	GPIO_Init(GPIOD, &GPIO_InitStructure); 				 //根据设定参数初始化GPIOD.0
 	GPIO_SetBits(GPIOD,GPIO_Pin_0);						 //PD.0 输出高
-	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;				 //PA.15 端口配置,RS
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;		 //推挽输出
-	GPIO_Init(GPIOA, &GPIO_InitStructure); 				 //根据设定参数初始化GPIOA.15
-	GPIO_SetBits(GPIOA,GPIO_Pin_15);						 //A.15 输出高
-//	GPIO_ResetBits(GPIOA,GPIO_Pin_15);						 //A.15 输出低
 
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;				 //PD.12 端口配置,RS
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;		 //推挽输出

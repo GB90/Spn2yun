@@ -111,61 +111,74 @@ fun	:		这里时钟选择为APB1的2倍，而APB1为36M
 void TIM2_Int_Init(u16 arr,u16 psc)
 {
     TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-
-	NVIC_InitTypeDef NVIC_InitStructure;
-    //GPIO_InitTypeDef GPIO_InitStructure;
-
+    NVIC_InitTypeDef NVIC_InitStructure; 
+    TIM_OCInitTypeDef  TIM_OCInitStructure;
+    GPIO_InitTypeDef GPIO_InitStructure;    
+	
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);	 //使能PA,PC端口时钟
   	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); 
+    
+    GPIO_PinRemapConfig(GPIO_PartialRemap1_TIM2, ENABLE);
+    //设置该引脚为复用输出功能,输出TIM2 CH1的PWM脉冲波形
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15; //TIM_CH1
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  			//复用推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
     
 	TIM_TimeBaseStructure.TIM_Period = arr; 
 	TIM_TimeBaseStructure.TIM_Prescaler =psc; 
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1; 
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  
 	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure); 
-    
-//	GPIO_PinRemapConfig(GPIO_PartialRemap1_TIM2, ENABLE); 		//Timer3部分重映射  TIM3_CH3->PC8 
-//    //设置该引脚为复用输出功能,输出TIM3 CH2的PWM脉冲波形
-//	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15; //TIM_CH1
-//	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  			//复用推挽输出
-//	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-//	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //CH1 PWM2模式	
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //比较输出使能
+	TIM_OCInitStructure.TIM_Pulse = 100; //设置待装入捕获比较寄存器的脉冲值
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low; //OC1 低电平有效 
+	TIM_OC1Init(TIM2, &TIM_OCInitStructure);  //根据指定的参数初始化外设TIMx
+	TIM_OC1PreloadConfig(TIM2, TIM_OCPreload_Enable);  //CH1 预装载使能
+	TIM_ARRPreloadConfig(TIM2, ENABLE); //使能TIMx在ARR上的预装载寄存器///
+	TIM_SetCompare1(TIM2,LCDBACK);
+
+    TIM_Cmd(TIM2, ENABLE);  //使能TIMx
 	TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE ); 
 
 	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn; 
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;  
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;  
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; 
-	NVIC_Init(&NVIC_InitStructure); 
-
-
-	TIM_Cmd(TIM2, ENABLE);  
+	NVIC_Init(&NVIC_InitStructure);
 }
 void TIM2_IRQHandler(void)   
 {
+    static u8 numms = 0;
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)  
 	{
-		TIM_ClearITPendingBit(TIM2, TIM_IT_Update  );  
-		T10mS+=1;
-		InputTimer --;
-        if(InputTimer > 10000)
+		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);  
+        if(numms++ > 10)
         {
-            InputTimer = 0;
-        }
-		if(T10mS & 0x00000020)
-		{
-			skidstime++;
-			Fsh500mS=1;		
-			locktime++;
-			if(locktime>LockedRotorTime*10)
-			{
-				locktime=0;
-			}
-		}
-		else
-		{
-			Fsh500mS=0;
-		}					
+            numms = 0;
+            T10mS+=1;
+            InputTimer --;
+            if(InputTimer > 10000)
+            {
+                InputTimer = 0;
+            }
+            if(T10mS & 0x00000020)
+            {
+                skidstime++;
+                Fsh500mS=1;		
+                locktime++;
+                if(locktime>LockedRotorTime*10)
+                {
+                    locktime=0;
+                }
+            }
+            else
+            {
+                Fsh500mS=0;
+            }
+        }        
 	}
 }
 

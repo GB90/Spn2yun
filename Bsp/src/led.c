@@ -40,12 +40,6 @@ void LED_Init(void)
  GPIO_SetBits(GPIOA,GPIO_Pin_12); 						 //PA.12 输出高 
 */
 
-GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;				//LED4-->PA.15 端口配置, 推挽输出
-GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 //IO口速度为50MHz
-GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //推挽输出
-GPIO_Init(GPIOA, &GPIO_InitStructure);					
-GPIO_SetBits(GPIOA,GPIO_Pin_15);						//PA.15 输出高 
-
 }
 
  
