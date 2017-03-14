@@ -474,7 +474,7 @@ void  LockedRotor(void)
         {
             if(Moto_FWD_Chk) 
             {
-                if(CloseDirection)
+                if(SetCloseDir)
                 {
                     POStus.AL |= OPENBLOCK;
                 }
@@ -485,7 +485,7 @@ void  LockedRotor(void)
             }
             else if(Moto_REV_Chk)
             {
-				if(CloseDirection)
+				if(SetCloseDir)
 				{
 					POStus.AL |= SHUTBLOCK;
 				}
@@ -2152,7 +2152,7 @@ void dispMain(void)
             LED3 = 1;
             if(Moto_FWD_Chk) 
             {
-                if(CloseDirection)
+                if(SetCloseDir)
                 {
                     StusView=_Kaifa;
                 }
@@ -2164,7 +2164,7 @@ void dispMain(void)
             }
             else if(Moto_REV_Chk)
             {
-                if(CloseDirection)
+                if(SetCloseDir)
                 {
                     StusView=_BiFa;
                 }
@@ -2460,6 +2460,17 @@ void dispMain(void)
 		display_char16x32(120,NewX,Jin_16x32,8 & DispSetSel);
 		display_char16x32(120,NewX + 5,Zhi3_16x32,8 & DispSetSel);
 	}
+    
+//#if (POWER_MODE == 1)//测试显示内容
+//    if(1 == dir)
+//    {
+//        display_char14x14(39,30,Zheng_14x14,0);
+//    }
+//    else
+//    {
+//        display_char14x14(39,30,Fan_14x14,0);
+//    }
+//#endif
     
 #if (SOFTLOCK == 1)
     if(lock)//上锁
@@ -3545,7 +3556,7 @@ void disp_Set1_4_x(u16 Sel)
 			display_char14x14(jump+line*2+2,1*5+_coloffset_1_4-3,Ju_14x14,0x02 & Sel);
 			display_char14x14(jump+line*2+2,2*5+_coloffset_1_4-3,Jian3_14x14,0x02 & Sel);
 			display_char14x14(jump+line*2+2,3*5+_coloffset_1_4-3,Ce_14x14,0x02 & Sel);	
-			if(CloseDirection)
+			if(SetCloseDir)
 			{
 				if(PIStus.OTS)
 				{
@@ -5367,7 +5378,7 @@ void IntermittentRundis(u8 Htarget ,u8 Ltarget)
 	else if( (((PIStus.VMA_IN_Pers )/10)*10  + PosAccuracy)&&(GetMotoPos() <Htarget))			//小于目标值，正转
 	{
 		Moto_FWD_Drv;
-		if(CloseDirection)
+		if(SetCloseDir)
 		{
 			StusView=_Kaifa;
 		}
@@ -5379,7 +5390,7 @@ void IntermittentRundis(u8 Htarget ,u8 Ltarget)
 	else if( (((PIStus.VMA_IN_Pers)/10)*10  + PosAccuracy)&&(GetMotoPos() >Ltarget))			//大于目标值反转
 	{
 		Moto_REV_Drv;
-		if(CloseDirection)
+		if(SetCloseDir)
 		{
 			StusView=_BiFa;
 		}

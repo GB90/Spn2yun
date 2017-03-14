@@ -2,7 +2,7 @@
 #include "BIO.h"
 
 u16 ChanlCnt;					//输出通道轮换设定
-
+u8 dir = 0;
 u16 ChSel[] = {9,8,7,6,5,4,3,2,1,0}; //10个输出口的输出通道号。即默认值 : MRTS ChS = 9;MD ChS = 8;SHUTRUN ChS = 7;OPENRUN ChS = 6;
 							    //RCL ChS = 5;CTSOUT ChS = 4;OTSOUT ChS = 3;ACLSOUT ChS = 2;AOLSOUT ChS = 1;AL ChS = 0;
 
@@ -139,9 +139,9 @@ void IO_Init(void)
 	GPIO_Init(GPIOE, &GPIO_InitStructure);					//根据设定参数初始化GPIO
 	GPIO_SetBits(GPIOE,GPIO_Pin_5); 						//输出高
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;				//端口配置
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;		 	//OTL
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;		 	//OTL
 	GPIO_Init(GPIOE, &GPIO_InitStructure);				 	//根据设定参数初始化GPIO
-	GPIO_ResetBits(GPIOE,GPIO_Pin_7); 					 	//输出高
+	GPIO_SetBits(GPIOE,GPIO_Pin_7); 					 	//输出高
 	//OUTPUT
 	//PA6
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;				//端口配置
@@ -174,9 +174,9 @@ void IO_Init(void)
 	GPIO_Init(GPIOB, &GPIO_InitStructure); 		   			//根据设定参数初始化GPIO
 	GPIO_SetBits(GPIOB,GPIO_Pin_14);						//输出高
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15; 		   		//端口配置
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;		//
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;		    //
 	GPIO_Init(GPIOB, &GPIO_InitStructure); 			  		//根据设定参数初始化GPIO
-	GPIO_SetBits(GPIOB,GPIO_Pin_15);						//输出高
+	//GPIO_ResetBits(GPIOB,GPIO_Pin_15);						
 	//PC2,5,6,7
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5 | GPIO_Pin_6;				//端口配置
 	GPIO_Init(GPIOC, &GPIO_InitStructure);					//根据设定参数初始化GPIO
@@ -237,7 +237,7 @@ void Output(void)
     
     if(Closeway)                                //通过力矩开关判断是否到位
     {
-        if(CloseDirection)                      //正向
+        if(SetCloseDir)                      //正向
 		{
             if((PIStus.CTS || (POStus.AL & SHUTBLOCK)) && Moto_REV_Chk)        //反转到极限? 
             {
@@ -316,7 +316,7 @@ void Output(void)
 	}
 	else										//通过限位开关判断是否到位
 	{
-        if(CloseDirection)                      //正向
+        if(SetCloseDir)                      //正向
 		{
             if((PIStus.CTS || PIStus.ACLS || ((PIStus.FK_IN_Pers & 0x7fff) <= PosAccuracy) \
                 || (POStus.AL & SHUTBLOCK) || (PIStus.FK_IN_Pers & 0x8000)) && Moto_REV_Chk)			//关到极限?
@@ -388,7 +388,7 @@ void Output(void)
         }
     }
         
-	if(CloseDirection)                              //正向
+	if(SetCloseDir)                              //正向
     {
         if(Moto_FWD_Chk)		                    //正转无报警状态
         {
@@ -589,9 +589,9 @@ void Output(void)
 //	OutToCh(12, POStus.CV_IO);					//开关量， 电压/电流输出模式转换
 //    if(RelayRunFlag)//
     RelayRun();
-    P_M_SW = !(POStus.M_SW & 0xff) && 1;                   //电机正转输出
-    P_M_OS = !(POStus.M_OS & 0xff) && 1;                    //电机反转输出
-    P_C_IO = !(POStus.CV_IO & 0xff) && 1;                   //开关量， 电压/电流输出模式转换 
+    P_M_SW = !(POStus.M_SW & 0xff) && 1;        //电机正转输出
+    P_M_OS = !(POStus.M_OS & 0xff) && 1;        //电机反转输出
+    P_C_IO = !(POStus.CV_IO & 0xff) && 1;       //开关量， 电压/电流输出模式转换 
 }
 
 /*********************************************************
@@ -624,16 +624,18 @@ void Sample(void)
     PIStus.IN_ESD=0x01 & !P_IN_ESD;		//远程ESD
     PIStus.IN_BC=0x01 & !P_IN_BC;		//远程保持
     PIStus.PHASE=0x01 & !P_PHASE;		//电源相序
-    PIStus.PHASE_LOST=0x01 & !P_PHASELOST;		//电源相序
+    PIStus.PHASE_LOST=0x01 & P_PHASELOST;		//电源相序
     //PIStus.IN_SHUT=0x01 & !P_IN_SHUT;	//远程关
     //PIStus.IN_OPEN=0x01 & !P_IN_OPEN;	//远程开
 		
     if(PIStus.PHASE)                   //相序正序？
     {
         CloseDirection = SetCloseDir;
+        dir = 1;
     }
     else
     {
+        dir = 0;
         if(SetCloseDir)                 //设置的关闭方向
         {
             CloseDirection = 0;
@@ -648,7 +650,7 @@ void Sample(void)
     if(PIStus.CTS)						//闭力矩信号
     {
         POStus.MRTS = 1;
-        if(1 == CloseDirection)
+        if(1 == SetCloseDir)
         {
             POStus.AL |= ERRCTS; 		//超下行程报警，全闭
         }
@@ -660,7 +662,7 @@ void Sample(void)
     else
     {
         POStus.MRTS = 0;
-        if(1 == CloseDirection)
+        if(1 == SetCloseDir)
         {
             POStus.AL &= ~ERRCTS; 		//超下行程报警，全闭
         }
@@ -673,7 +675,7 @@ void Sample(void)
     if(PIStus.OTS) 						        //闭力矩信号
     {
         POStus.MRTS = 1;
-        if(0 == CloseDirection)
+        if(0 == SetCloseDir)
         {
             POStus.AL |= ERRCTS; 				//超下行程报警，全闭
         }
@@ -685,7 +687,7 @@ void Sample(void)
     else
     {
         POStus.MRTS = 0;
-        if(0 == CloseDirection)
+        if(0 == SetCloseDir)
         {
             POStus.AL &= ~ERRCTS; 				//超下行程报警，全闭
         }
@@ -768,7 +770,7 @@ void Sample(void)
     }
     else
     {
-        if(CloseDirection)
+        if(SetCloseDir)
         {
             if(PIStus.FK_IN >= PosLmdD)							    //阀位下限
             {
@@ -896,7 +898,7 @@ void RelayRun(void)
     RelayBit.Relay9 = RelayByte.ByteArray[RelayType[8]] && 1;
     //RelayBit.Relay10 = RelayByte.ByteArray[RelayType[9]] && 1;
     RelayBit.Relay10 = POStus.AL && 1;
-    
+/*    
     Po1 = RelayBit.Relay10;     //監視
     Po2 = !RelayBit.Relay1;     //OUT1
     Po3 = !RelayBit.Relay2;     //OUT2
@@ -907,6 +909,11 @@ void RelayRun(void)
     Po8 = !RelayBit.Relay7;     //OUT7
     Po9 = !RelayBit.Relay8;     //OUT8
     Po10 = !RelayBit.Relay9;    //OUT9
+*/    
+    P_OTSOUT = RelayBit.Relay10;     //監視
+    P_ACLSOUT = !RelayBit.Relay1;     //OUT1
+    P_AOLSOUT = !RelayBit.Relay2;     //OUT2	
+    P_AL = !RelayBit.Relay3;     //OUT3
 }
 
 
@@ -1179,7 +1186,7 @@ u16 EncoderToPer(void)
     
     temp = (Curr * 10000 / Len);
 
-    if(0 == CloseDirection)//反作用
+    if(0 == SetCloseDir)//反作用
     {
         temp = 10000 - temp;
     }

@@ -38,7 +38,7 @@ int main(void)
 	//GetDataFromFlash();		//恢复已经保存的数据
 	Display_Init();
 	clear_screen();
-	ModBusDataInit();               //初始化WMbData值
+	ModBusDataInit();           //初始化WMbData值
  	while(1)
 	{
 		IWDG_feed();		    //喂狗

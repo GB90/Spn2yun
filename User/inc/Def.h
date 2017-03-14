@@ -17,11 +17,13 @@
 #include "BIO.h"
 #include "iwdg.h"
 
-//#define __Debug__                                         //测试选项 10% 约 7mA
-#define LCDBACK         40                                  //背光亮度0~99
+#define __Debug__                                         //测试选项 10% 约 7mA
+#define LCDBACK         50                                  //背光亮度0~99
 #define DISTEMP         0                                   //温度显示      0:不显示        1:显示
 #define SOFTLOCK        0                                   //软件锁        0:无效          1:有效
 #define MB_MODE         1                                   //modbus模式    0:带超时读写    1:只读 2:无
+#define POWER_MODE      1                                   //电源模式      0:220V          1:380V
+
 
 #define VERSION        ((const u8*)("V:0.1.41")) 			//版本号
 #define DATE           ((const u8*)("2016/10/27"))			//日期
@@ -33,18 +35,18 @@
 //#define P_BM1 		PAin(4)		//输入口，编码器
 //#define P_BM2 		PAin(5)		//输入口，编码器
 //#define P_BM3 		PAin(7)		//输入口，编码器
-#define P_OTL 		PEin(7)		//输入口，过热检测
-#define P_CTS 		PBin(0)		//输入口，闭力矩检测
-#define P_OTS 		PCin(4)		//输入口，开力矩检测
-#define P_ACLS		PCin(3)		//输入口，关辅助限位	
-#define P_AOLS		PCin(1)		//输入口，开辅助限位	
-#define P_IN_RCL	PCin(0)		//输入口，远程 自动/调节
-#define P_IN_ESD	PCin(13)	//输入口，远程ESD	
-#define P_IN_BC		PEin(5)		//输入口，远程保持
-#define P_IN_SHUT 	PEin(4)		//输入口，远程关
-#define P_IN_OPEN 	PEin(3)		//输入口，远程开
-#define P_PHASE 	PEin(2)		//输入口，相序
-#define P_PHASELOST PEin(1)		//输入口，缺相
+#define P_OTL 		PEin(7)		    //输入口，过热检测
+#define P_CTS 		PBin(0)		    //输入口，闭力矩检测
+#define P_OTS 		PCin(4)		    //输入口，开力矩检测
+#define P_ACLS		PCin(3)		    //输入口，关辅助限位	
+#define P_AOLS		PCin(1)		    //输入口，开辅助限位	
+#define P_IN_RCL	PCin(0)		    //输入口，远程 自动/调节
+#define P_IN_ESD	PCin(13)	    //输入口，远程ESD	
+#define P_IN_BC		PEin(5)		    //输入口，远程保持
+#define P_IN_SHUT 	PEin(4)		    //输入口，远程关
+#define P_IN_OPEN 	PEin(3)		    //输入口，远程开
+#define P_PHASE 	PBin(15)		//输入口，相序
+#define P_PHASELOST PEin(2)		    //输入口，缺相
 
 //#define P_MRTS		PBout(15)	//输出口1， 正在运行/过矩输出
 //#define P_MD		    PBout(14)	//输出口2， 中间位置输出
@@ -59,6 +61,11 @@
 //#define P_M_SW	    PCout(6)	//输出口，  电机驱动输出 
 //#define P_M_OS		PCout(7)	//输出口，  电机正反转输出	
 //#define P_C_IO		PEout(6)	//输出口，  电压/电流输出模式转换
+
+#define P_OTSOUT	    PBout(1)	//输出口7， 开力矩输出
+#define P_ACLSOUT 	    PCout(5)	//输出口8， 关辅助限位输出	
+#define P_AOLSOUT 	    PAout(6)	//输出口9， 开辅助限位输出			
+#define P_AL		    PCout(2)	//输出口10，故障报警输出 	
 
 //开关量输出通道1~10定义:
 #define Po10		PBout(15)		//输出口10， 默认为正在运行/过矩输出

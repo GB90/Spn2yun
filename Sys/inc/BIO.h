@@ -9,15 +9,18 @@
 #define ENCODER_MAX			((u32)4095)//32bit 编码器最大值
 #define ENCODER_ZERO    	((u8)100)//零点的范围 ±100
 
-#define Moto_REV_Drv		{if(CloseDirection){POStus.M_SW=0xb00;POStus.M_OS=0xb01;} \
-							 else{POStus.M_SW=0xb01;POStus.M_OS=0xb00;}}					//CloseDirection=1 反转，CloseDirection=0 正转
+#define Moto_REV_Drv		{if(CloseDirection){POStus.M_SW=0xb00;POStus.M_OS=0xb01;}\
+							 else{POStus.M_OS=0xb00;POStus.M_SW=0xb01;}}					//CloseDirection=1 反转，CloseDirection=0 正转
 							 
-#define Moto_FWD_Drv		{if(CloseDirection){POStus.M_SW=0xb01;POStus.M_OS=0xb00;}\
+#define Moto_FWD_Drv		{if(CloseDirection){POStus.M_OS=0xb00;POStus.M_SW=0xb01;}\
 							 else{POStus.M_SW=0xb00;POStus.M_OS=0xb01;}}					//CloseDirection=1 正转，CloseDirection=0反转
-							 
+#if (POWER_MODE == 1)
+#define Moto_STOP_Drv		{if(!Moto_PARK_Chk){POStus.M_SW=POStus.M_OS=0xb00;}			    //刹车	(刹车20ms，然后停止)                             
+#else
 #define Moto_STOP_Drv		{if(!Moto_PARK_Chk){POStus.M_SW=0xb01;POStus.M_OS=0xb01;\
-  							  delay_ms(70); POStus.M_SW=POStus.M_OS=0xb00;}}			    //刹车	(刹车20ms，然后停止)
-  							
+  							POStus.M_SW=POStus.M_OS=0xb00;}}			    //刹车	(刹车20ms，然后停止)                       
+#endif
+							
 //#define Moto_PARK_Drv		{if(!Moto_PARK_Chk){POStus.M_SW=POStus.M_OS=0xb00;}}	
 #define Moto_PARK_Drv		{POStus.M_SW=POStus.M_OS=0xb00;}                                            //停止
 //电机状态查询
@@ -95,6 +98,7 @@ extern u16 ChanlCnt;
 extern u16 ChSel[]; //10个输出口的输出通道号。即默认值 : MRTS ChS = 9;MDChS = 8;SHUTRUN ChS = 7;OPENRUN ChS = 6;
 				//RCL ChS = 5;CTSOUT ChS = 4;OTSOUT ChS = 3;ACLSOUT ChS = 2;AOLSOUT ChS = 1;AL ChS = 0;
 
+extern u8 dir;
 extern u16 MRTSChS;
 extern u16 MDChS;
 extern u16 SHUTRUNChS;
