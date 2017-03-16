@@ -1485,6 +1485,9 @@ void dispSetMenu1_1(void)
                 {
                     ClosewayTemp = Closeway | 0x80;         //保存原有的关方式
                     Closeway = 1;                           //设定行程时改为力矩关，无电子限位
+#if (POWER_MODE == 1)                    
+                    PhaseDir = PIStus.PHASE;                //刷新相序
+#endif
                 }
                 if(DispSetSel == 0x001)
                 {
@@ -2461,16 +2464,16 @@ void dispMain(void)
 		display_char16x32(120,NewX + 5,Zhi3_16x32,8 & DispSetSel);
 	}
     
-//#if (POWER_MODE == 1)//测试显示内容
-//    if(1 == dir)
-//    {
-//        display_char14x14(39,30,Zheng_14x14,0);
-//    }
-//    else
-//    {
-//        display_char14x14(39,30,Fan_14x14,0);
-//    }
-//#endif
+#if (POWER_MODE == 1 && POWER_MODE_DISP == 1)//测试显示内容
+    if(PhaseDir == PIStus.PHASE)
+    {
+        display_char14x14(24,35,Zheng_14x14,0);
+    }
+    else
+    {
+        display_char14x14(24,35,Fan_14x14,0);
+    }
+#endif
     
 #if (SOFTLOCK == 1)
     if(lock)//上锁

@@ -2,7 +2,7 @@
 #include "BIO.h"
 
 u16 ChanlCnt;					//输出通道轮换设定
-u8 dir = 0;
+u16 PhaseDir = 0;
 u16 ChSel[] = {9,8,7,6,5,4,3,2,1,0}; //10个输出口的输出通道号。即默认值 : MRTS ChS = 9;MD ChS = 8;SHUTRUN ChS = 7;OPENRUN ChS = 6;
 							    //RCL ChS = 5;CTSOUT ChS = 4;OTSOUT ChS = 3;ACLSOUT ChS = 2;AOLSOUT ChS = 1;AL ChS = 0;
 
@@ -89,7 +89,7 @@ void IO_Init(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;				//端口配置
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;			//
 	GPIO_Init(GPIOB, &GPIO_InitStructure);					//根据设定参数初始化GPIO
-	GPIO_SetBits(GPIOB,GPIO_Pin_0); 						//输出高
+	//GPIO_SetBits(GPIOB,GPIO_Pin_0); 						//输出高
 	//PB8
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;				//端口配置
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;	//
@@ -115,7 +115,7 @@ void IO_Init(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;				//端口配置
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;		 	//
 	GPIO_Init(GPIOC, &GPIO_InitStructure);				 	//根据设定参数初始化GPIO
-	GPIO_SetBits(GPIOC,GPIO_Pin_13); 					 	//输出高
+	//GPIO_SetBits(GPIOC,GPIO_Pin_13); 					 	//输出高
 	//PE1,2,3,4,5,7
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;				//端口配置
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;			//
@@ -178,16 +178,15 @@ void IO_Init(void)
 	GPIO_Init(GPIOB, &GPIO_InitStructure); 			  		//根据设定参数初始化GPIO
 	//GPIO_ResetBits(GPIOB,GPIO_Pin_15);						
 	//PC2,5,6,7
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5 | GPIO_Pin_6;				//端口配置
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5;				//端口配置
 	GPIO_Init(GPIOC, &GPIO_InitStructure);					//根据设定参数初始化GPIO
 	GPIO_SetBits(GPIOC,GPIO_Pin_2); 						//输出高
     GPIO_SetBits(GPIOC,GPIO_Pin_5); 						//输出高
-    GPIO_SetBits(GPIOC,GPIO_Pin_6); 						//输出高
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;				//端口配置
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;				//端口配置
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;		//
 	GPIO_Init(GPIOC, &GPIO_InitStructure);				 	//根据设定参数初始化GPIO
-	GPIO_SetBits(GPIOC,GPIO_Pin_7); 					 	//输出高
+	//GPIO_SetBits(GPIOC,GPIO_Pin_7); 					 	//输出高
 	//PE6
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;				//端口配置
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;		//
@@ -294,8 +293,6 @@ void Output(void)
             }
         }
             
-        
-
         if(PIStus.CTS)
         {           
             RelayByte.Byte.RelayShut = 1;
@@ -589,8 +586,8 @@ void Output(void)
 //	OutToCh(12, POStus.CV_IO);					//开关量， 电压/电流输出模式转换
 //    if(RelayRunFlag)//
     RelayRun();
-    P_M_SW = !(POStus.M_SW & 0xff) && 1;        //电机正转输出
-    P_M_OS = !(POStus.M_OS & 0xff) && 1;        //电机反转输出
+    P_M_SW = (POStus.M_SW & 0xff) && 1;        //电机正转输出
+    P_M_OS = (POStus.M_OS & 0xff) && 1;        //电机反转输出
     P_C_IO = !(POStus.CV_IO & 0xff) && 1;       //开关量， 电压/电流输出模式转换 
 }
 
@@ -623,28 +620,33 @@ void Sample(void)
     PIStus.IN_RCL=0x01 & !P_IN_RCL;		//远程输入
     PIStus.IN_ESD=0x01 & !P_IN_ESD;		//远程ESD
     PIStus.IN_BC=0x01 & !P_IN_BC;		//远程保持
-    PIStus.PHASE=0x01 & !P_PHASE;		//电源相序
-    PIStus.PHASE_LOST=0x01 & P_PHASELOST;		//电源相序
     //PIStus.IN_SHUT=0x01 & !P_IN_SHUT;	//远程关
     //PIStus.IN_OPEN=0x01 & !P_IN_OPEN;	//远程开
-		
-    if(PIStus.PHASE)                   //相序正序？
+    
+#if (POWER_MODE == 1)
+
+    PIStus.PHASE = 0x01 & P_PHASE;		//电源相序
+    PIStus.PHASE_LOST = 0x01 & P_PHASELOST;		//电源缺相
+
+    if(PhaseDir == PIStus.PHASE)                   //相序正序？
     {
         CloseDirection = SetCloseDir;
-        dir = 1;
     }
     else
     {
-        dir = 0;
-        if(SetCloseDir)                 //设置的关闭方向
-        {
-            CloseDirection = 0;
-        }
-        else
-        {
-            CloseDirection = 1;
-        }
+        CloseDirection = 0x01 & !SetCloseDir;
     }
+    
+    if(PIStus.PHASE_LOST)
+    {
+        POStus.AL |= PHASELOST;			    //缺相
+    }
+    else if(POStus.AL & PHASELOST)
+    {
+        POStus.AL &= ~PHASELOST;
+    }
+    
+ #endif
     
     //信号处理
     if(PIStus.CTS)						//闭力矩信号
@@ -715,16 +717,7 @@ void Sample(void)
     {
         POStus.AL &= ~EXTTHIGH;
     }
-    
-    if(PIStus.PHASE_LOST)
-    {
-        POStus.AL |= PHASELOST;			    //缺相
-    }
-    else if(POStus.AL & PHASELOST)
-    {
-        POStus.AL &= ~PHASELOST;
-    }
-    
+        
     RelayByte.Byte.RelayCTor = POStus.AL & ERRCTS;
     RelayByte.Byte.RelayOTor = POStus.AL & ERROTS;
     RelayByte.Byte.RelayTor = POStus.MRTS;
@@ -897,7 +890,7 @@ void RelayRun(void)
     RelayBit.Relay8 = RelayByte.ByteArray[RelayType[7]] && 1;
     RelayBit.Relay9 = RelayByte.ByteArray[RelayType[8]] && 1;
     //RelayBit.Relay10 = RelayByte.ByteArray[RelayType[9]] && 1;
-    RelayBit.Relay10 = POStus.AL && 1;
+    RelayBit.Relay10 = POStus.AL && 1;      //固定
 /*    
     Po1 = RelayBit.Relay10;     //監視
     Po2 = !RelayBit.Relay1;     //OUT1
@@ -910,10 +903,10 @@ void RelayRun(void)
     Po9 = !RelayBit.Relay8;     //OUT8
     Po10 = !RelayBit.Relay9;    //OUT9
 */    
-    P_OTSOUT = RelayBit.Relay10;     //監視
+    P_OTSOUT = RelayBit.Relay10;      //監視
     P_ACLSOUT = !RelayBit.Relay1;     //OUT1
     P_AOLSOUT = !RelayBit.Relay2;     //OUT2	
-    P_AL = !RelayBit.Relay3;     //OUT3
+    P_AL = !RelayBit.Relay3;          //OUT3
 }
 
 

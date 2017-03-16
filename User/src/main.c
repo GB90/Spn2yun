@@ -39,6 +39,7 @@ int main(void)
 	Display_Init();
 	clear_screen();
 	ModBusDataInit();           //≥ı ºªØWMbData÷µ
+    
  	while(1)
 	{
 		IWDG_feed();		    //Œππ∑

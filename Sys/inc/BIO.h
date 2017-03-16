@@ -98,7 +98,7 @@ extern u16 ChanlCnt;
 extern u16 ChSel[]; //10个输出口的输出通道号。即默认值 : MRTS ChS = 9;MDChS = 8;SHUTRUN ChS = 7;OPENRUN ChS = 6;
 				//RCL ChS = 5;CTSOUT ChS = 4;OTSOUT ChS = 3;ACLSOUT ChS = 2;AOLSOUT ChS = 1;AL ChS = 0;
 
-extern u8 dir;
+extern u16 PhaseDir;
 extern u16 MRTSChS;
 extern u16 MDChS;
 extern u16 SHUTRUNChS;
