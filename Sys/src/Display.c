@@ -34,6 +34,7 @@ u32	MoveMaxTim=5000;
 u32 WaitTim;
 u32 WaitTimKai;
 u32 WaitTimBi;
+
 u16 lock;
 u8 BaseSet1_STEP=0;
 u8 StusView;							//状态显示信息(字串序号)
@@ -474,7 +475,7 @@ void  LockedRotor(void)
         {
             if(Moto_FWD_Chk) 
             {
-                if(SetCloseDir)
+                if(1 == CloseDirection)
                 {
                     POStus.AL |= OPENBLOCK;
                 }
@@ -485,7 +486,7 @@ void  LockedRotor(void)
             }
             else if(Moto_REV_Chk)
             {
-				if(SetCloseDir)
+				if(1 == CloseDirection)
 				{
 					POStus.AL |= SHUTBLOCK;
 				}
@@ -575,8 +576,8 @@ void JogRun(void)
         {
             if((GetMotoPos() < _MoreLdU))	//点动状态每次转	50
             {
-                Moto_FWD_Drv;			//正转
-                        //电机转动了，需要刹车，置位刹车状态机
+                Moto_FWD_Drv;			    //正转
+                                            //电机转动了，需要刹车，置位刹车状态机
                 stopflag = 1;				//电机转动了，需要刹车，置位刹车状态机
             }            
         }
@@ -584,7 +585,7 @@ void JogRun(void)
         {
             if((GetMotoPos() > _LessLdD) )	
             {
-                Moto_REV_Drv;			//反转
+                Moto_REV_Drv;			    //反转
                 stopflag = 1;				//电机转动了，需要刹车，置位刹车状态机
             }                        
         }
@@ -2155,7 +2156,7 @@ void dispMain(void)
             LED3 = 1;
             if(Moto_FWD_Chk) 
             {
-                if(SetCloseDir)
+                if(1 == CloseDirection)
                 {
                     StusView=_Kaifa;
                 }
@@ -2167,7 +2168,7 @@ void dispMain(void)
             }
             else if(Moto_REV_Chk)
             {
-                if(SetCloseDir)
+                if(1 == CloseDirection)
                 {
                     StusView=_BiFa;
                 }
@@ -2465,7 +2466,7 @@ void dispMain(void)
 	}
     
 #if (POWER_MODE == 1 && POWER_MODE_DISP == 1)//测试显示内容
-    if(PhaseDir == PIStus.PHASE)
+    if(1 == CloseDirection)
     {
         display_char14x14(24,35,Zheng_14x14,0);
     }
@@ -3559,7 +3560,7 @@ void disp_Set1_4_x(u16 Sel)
 			display_char14x14(jump+line*2+2,1*5+_coloffset_1_4-3,Ju_14x14,0x02 & Sel);
 			display_char14x14(jump+line*2+2,2*5+_coloffset_1_4-3,Jian3_14x14,0x02 & Sel);
 			display_char14x14(jump+line*2+2,3*5+_coloffset_1_4-3,Ce_14x14,0x02 & Sel);	
-			if(SetCloseDir)
+			if(1 == CloseDirection)
 			{
 				if(PIStus.OTS)
 				{
@@ -4477,7 +4478,7 @@ void CloseDirectionSet(void)
 		{
 			ClsKDn;
 			CloseDirectionflag = SetCloseDir;
-			EnSelFlsh=0;					//结束
+			EnSelFlsh=0;			
 		}
 	}	
 }
@@ -5381,7 +5382,7 @@ void IntermittentRundis(u8 Htarget ,u8 Ltarget)
 	else if( (((PIStus.VMA_IN_Pers )/10)*10  + PosAccuracy)&&(GetMotoPos() <Htarget))			//小于目标值，正转
 	{
 		Moto_FWD_Drv;
-		if(SetCloseDir)
+		if(1 == CloseDirection)
 		{
 			StusView=_Kaifa;
 		}
@@ -5393,7 +5394,7 @@ void IntermittentRundis(u8 Htarget ,u8 Ltarget)
 	else if( (((PIStus.VMA_IN_Pers)/10)*10  + PosAccuracy)&&(GetMotoPos() >Ltarget))			//大于目标值反转
 	{
 		Moto_REV_Drv;
-		if(SetCloseDir)
+		if(1 == CloseDirection)
 		{
 			StusView=_BiFa;
 		}

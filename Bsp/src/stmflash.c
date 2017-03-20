@@ -191,8 +191,8 @@ void SaveDataToFlash(void)
     
     STMFLASH_Write(FLASH_SAVE_ADDR + 84,&Rs485Way,1);
     STMFLASH_Write(FLASH_SAVE_ADDR + 86,&mbaddr,1);
+    STMFLASH_Write(FLASH_SAVE_ADDR + 88,&PhaseDir,1);
 	IWDG_feed();		//喂狗
-	STMFLASH_Write(FLASH_SAVE_ADDR + 88,&PhaseDir,1);
     
 	i =0x5a;
 	STMFLASH_Write(FLASH_SAVE_ADDR + 98,&i,1);//存储过标志
@@ -312,7 +312,7 @@ void GetDataFromFlash(void)
         Intermediate1=25;           //中间位置1 0%~中间位置1
         Intermediate2=75;
 		lock=0;                     //默认不上软件锁
-        PhaseDir = 1;               //正相序
+        PhaseDir = 0;
         SaveDataToFlash();
     }
 

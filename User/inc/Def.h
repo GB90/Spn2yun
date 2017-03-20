@@ -23,7 +23,7 @@
 #define SOFTLOCK        0                                   //软件锁        0:无效          1:有效
 #define MB_MODE         1                                   //modbus模式    0:带超时读写    1:只读 2:无
 #define POWER_MODE      1                                   //电源模式      0:220V          1:380V
-#define POWER_MODE_DISP 0                                   //POWER_MODE = 1时 才显示相序状态  当前相序与行程设置时候的相序比较
+#define POWER_MODE_DISP 1                                   //POWER_MODE = 1时 才显示相序状态  当前相序与行程设置时候的相序比较
 
 #define VERSION        ((const u8*)("V:0.1.41")) 			//版本号
 #define DATE           ((const u8*)("2016/10/27"))			//日期

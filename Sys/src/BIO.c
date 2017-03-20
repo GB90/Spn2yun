@@ -2,7 +2,6 @@
 #include "BIO.h"
 
 u16 ChanlCnt;					//输出通道轮换设定
-u16 PhaseDir = 0;
 u16 ChSel[] = {9,8,7,6,5,4,3,2,1,0}; //10个输出口的输出通道号。即默认值 : MRTS ChS = 9;MD ChS = 8;SHUTRUN ChS = 7;OPENRUN ChS = 6;
 							    //RCL ChS = 5;CTSOUT ChS = 4;OTSOUT ChS = 3;ACLSOUT ChS = 2;AOLSOUT ChS = 1;AL ChS = 0;
 
@@ -18,8 +17,9 @@ u16 AOLSOUTChS = 1;
 u16 ALChS = 0;
 //u8  RelayRunFlag = 1;
 u16 InputTimer;
-
+u16 WaitMoto = 0;
 u32 EncoderCurr;//编码器当前值
+u16 PhaseDir = 0;
 
 void Sample(void);
 void Output(void);
@@ -204,7 +204,6 @@ void IO_Init(void)
 	ACLSOUTChS = 2;
 	AOLSOUTChS = 1;
 	ALChS = 0;
-	POStus.MRTS=0;
 	POStus.MD=0;
 	POStus.SHUTRUN=0;
 	POStus.OPENRUN=0;
@@ -236,7 +235,7 @@ void Output(void)
     
     if(Closeway)                                //通过力矩开关判断是否到位
     {
-        if(SetCloseDir)                      //正向
+        if(1 == CloseDirection)                      //正向
 		{
             if((PIStus.CTS || (POStus.AL & SHUTBLOCK)) && Moto_REV_Chk)        //反转到极限? 
             {
@@ -311,9 +310,9 @@ void Output(void)
             RelayByte.Byte.RelayOpen = 0;
         }
 	}
-	else										//通过限位开关判断是否到位
+	else										//通过限位开关或阀位判断是否到位
 	{
-        if(SetCloseDir)                      //正向
+        if(1 == CloseDirection)                      //正向
 		{
             if((PIStus.CTS || PIStus.ACLS || ((PIStus.FK_IN_Pers & 0x7fff) <= PosAccuracy) \
                 || (POStus.AL & SHUTBLOCK) || (PIStus.FK_IN_Pers & 0x8000)) && Moto_REV_Chk)			//关到极限?
@@ -385,7 +384,7 @@ void Output(void)
         }
     }
         
-	if(SetCloseDir)                              //正向
+	if(1 == CloseDirection)                              //正向
     {
         if(Moto_FWD_Chk)		                    //正转无报警状态
         {
@@ -560,14 +559,6 @@ void Output(void)
 	}
     */
 
-//    if(POStus.CTSOUT || POStus.OTSOUT)
-//    {
-//        POStus.MRTS = 1;
-//    }
-//    else
-//    {
-//        POStus.MRTS = 0;
-//    }
         
 	//可选择的十个输出通道输出
 //	OutToCh(ChSel[0], POStus.MRTS);				//过力矩输出
@@ -586,8 +577,30 @@ void Output(void)
 //	OutToCh(12, POStus.CV_IO);					//开关量， 电压/电流输出模式转换
 //    if(RelayRunFlag)//
     RelayRun();
-    P_M_SW = (POStus.M_SW & 0xff) && 1;        //电机正转输出
-    P_M_OS = (POStus.M_OS & 0xff) && 1;        //电机反转输出
+    
+    if(1 == (POStus.M_SW & 0x00ff))
+    {
+        P_M_OS = 0;        //电机反转输出
+        if(WaitMoto > 200)
+        {
+            P_M_SW = 1;
+        }
+    }
+    else if(1 == (POStus.M_OS & 0x00ff))
+    {
+        P_M_SW = 0;        //电机反转输出
+        if(WaitMoto > 200)
+        {
+            P_M_OS = 1;
+        }
+    }
+    else
+    {
+        P_M_OS = 0;
+        P_M_SW = 0;
+        WaitMoto = 0;
+    }
+    
     P_C_IO = !(POStus.CV_IO & 0xff) && 1;       //开关量， 电压/电流输出模式转换 
 }
 
@@ -627,16 +640,17 @@ void Sample(void)
 
     PIStus.PHASE = 0x01 & P_PHASE;		//电源相序
     PIStus.PHASE_LOST = 0x01 & P_PHASELOST;		//电源缺相
-
+    
     if(PhaseDir == PIStus.PHASE)                   //相序正序？
     {
         CloseDirection = SetCloseDir;
     }
     else
     {
-        CloseDirection = 0x01 & !SetCloseDir;
+        CloseDirection = !SetCloseDir;
     }
     
+    //缺相检测
     if(PIStus.PHASE_LOST)
     {
         POStus.AL |= PHASELOST;			    //缺相
@@ -651,8 +665,7 @@ void Sample(void)
     //信号处理
     if(PIStus.CTS)						//闭力矩信号
     {
-        POStus.MRTS = 1;
-        if(1 == SetCloseDir)
+        if(1 == CloseDirection)
         {
             POStus.AL |= ERRCTS; 		//超下行程报警，全闭
         }
@@ -663,8 +676,7 @@ void Sample(void)
     }
     else
     {
-        POStus.MRTS = 0;
-        if(1 == SetCloseDir)
+        if(1 == CloseDirection)
         {
             POStus.AL &= ~ERRCTS; 		//超下行程报警，全闭
         }
@@ -674,28 +686,26 @@ void Sample(void)
         }
     }
 
-    if(PIStus.OTS) 						        //闭力矩信号
+    if(PIStus.OTS) 						        //开力矩信号
     {
-        POStus.MRTS = 1;
-        if(0 == SetCloseDir)
+        if(1 == CloseDirection)
         {
-            POStus.AL |= ERRCTS; 				//超下行程报警，全闭
+            POStus.AL |= ERROTS;
         }
         else
         {
-            POStus.AL |= ERROTS;
+            POStus.AL |= ERRCTS; 				//超下行程报警，全闭
         }
     }
     else
     {
-        POStus.MRTS = 0;
-        if(0 == SetCloseDir)
+        if(1 == CloseDirection)
         {
-            POStus.AL &= ~ERRCTS; 				//超下行程报警，全闭
+            POStus.AL &= ~ERROTS;
         }
         else
         {
-            POStus.AL &= ~ERROTS;
+            POStus.AL &= ~ERRCTS; 				//超下行程报警，全闭
         }
     }
     
@@ -720,7 +730,7 @@ void Sample(void)
         
     RelayByte.Byte.RelayCTor = POStus.AL & ERRCTS;
     RelayByte.Byte.RelayOTor = POStus.AL & ERROTS;
-    RelayByte.Byte.RelayTor = POStus.MRTS;
+    RelayByte.Byte.RelayTor = RelayByte.Byte.RelayCTor | RelayByte.Byte.RelayOTor;
          
     if(OutCVSel)											//给定选择电流还是电压
     {
@@ -1179,7 +1189,7 @@ u16 EncoderToPer(void)
     
     temp = (Curr * 10000 / Len);
 
-    if(0 == SetCloseDir)//反作用
+    if(1 != CloseDirection)//反作用
     {
         temp = 10000 - temp;
     }
