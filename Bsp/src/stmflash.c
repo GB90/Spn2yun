@@ -283,6 +283,7 @@ void GetDataFromFlash(void)
         NoSignalCtrSel=1;			//丢信处理方式	1停止，2全开，3全闭
         RmLcDisSel =1;				//远程0/本地(本地键盘操作)1/禁止>=2切换
         ScrSel =0;					//显示方向
+        transfer_command(0xc4);     //设置LCD 翻转方法 恢复出厂默认参数时候显示问题
         OutCVSel=1;					//输出电流或电压选择
         PassWord = 0000; 			//密码(默认为"0000"),限定小于等于9999
         //ChSel[i]                  //通道设置
