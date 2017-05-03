@@ -473,6 +473,40 @@ void  LockedRotor(void)
         //temp1=PIStus.FK_IN_Pers;
         if( locktime >= LockedRotorTime*10)
         {
+            /*
+            if(1 == CloseDirection)
+            {
+                if(Moto_FWD_Chk)
+                {
+                    POStus.AL |= OPENBLOCK;
+                }
+                else if(Moto_REV_Chk)
+                {
+                    POStus.AL |= SHUTBLOCK;
+                }
+                else
+                {
+                    POStus.AL &= ~OPENBLOCK;
+                    POStus.AL &= ~SHUTBLOCK;
+                }
+            }
+            else
+            {
+                if(Moto_FWD_Chk)
+                {
+                    POStus.AL |= SHUTBLOCK;
+                }
+                else if(Moto_REV_Chk)
+                {
+                    POStus.AL |= OPENBLOCK;
+                }
+                else
+                {
+                    POStus.AL &= ~OPENBLOCK;
+                    POStus.AL &= ~SHUTBLOCK;
+                }
+            }
+            */
             if(Moto_FWD_Chk) 
             {
                 if(1 == CloseDirection)
@@ -1012,7 +1046,7 @@ void RemoteQquantitydisplay(void)
 		}
 		else											//远程点动
 		{
-			if(!PIStus.IN_OPEN && PIStus.IN_SHUT)						//远程按键开阀
+			if(PIStus.IN_OPEN && !PIStus.IN_SHUT)						//远程按键开阀
 			{
 				if(GetMotoPos() < _MoreLdU) 
 				{
@@ -1023,7 +1057,7 @@ void RemoteQquantitydisplay(void)
 					Moto_PARK_Drv;
 				}
 			}
-			else  if(PIStus.IN_OPEN && !PIStus.IN_SHUT)				//远程按键闭阀		
+			else  if(!PIStus.IN_OPEN && PIStus.IN_SHUT)				//远程按键闭阀		
 			{
 				if(GetMotoPos() > _LessLdD) 
 				{
@@ -2154,6 +2188,7 @@ void dispMain(void)
             StusView=_TingZhi;
             LED2 = 1;
             LED3 = 1;
+           
             if(Moto_FWD_Chk) 
             {
                 if(1 == CloseDirection)
@@ -4478,7 +4513,7 @@ void CloseDirectionSet(void)
 		{
 			ClsKDn;
 			CloseDirectionflag = SetCloseDir;
-			EnSelFlsh=0;			
+			EnSelFlsh=0;
 		}
 	}	
 }
@@ -5382,26 +5417,26 @@ void IntermittentRundis(u8 Htarget ,u8 Ltarget)
 	else if( (((PIStus.VMA_IN_Pers )/10)*10  + PosAccuracy)&&(GetMotoPos() <Htarget))			//小于目标值，正转
 	{
 		Moto_FWD_Drv;
-		if(1 == CloseDirection)
+		/*if(1 == CloseDirection)
 		{
 			StusView=_Kaifa;
 		}
 		else
 		{
 			StusView=_BiFa;
-		}
+		}*/
 	}
 	else if( (((PIStus.VMA_IN_Pers)/10)*10  + PosAccuracy)&&(GetMotoPos() >Ltarget))			//大于目标值反转
 	{
 		Moto_REV_Drv;
-		if(1 == CloseDirection)
+		/*if(1 == CloseDirection)
 		{
 			StusView=_BiFa;
 		}
 		else
 		{
 			StusView=_Kaifa;
-		}
+		}*/
 	}	
 }
 /*********************************************************
@@ -5620,6 +5655,7 @@ void DefaultSet(void)		//恢复出厂
             NoSignalCtrSel=1;			//丢信处理方式	1停止，2全开，3全闭
             RmLcDisSel =1;				//远程0/本地(本地键盘操作)1/禁止>=2切换
             ScrSel =0;					//显示方向
+            transfer_command(0xc4);     //设置LCD 翻转方法 恢复出厂默认参数时候显示问题
             OutCVSel=1;					//输出电流或电压选择
             PassWord = 0; 			    //密码(默认为"0000"),限定小于等于9999
             //ChSel[i]                  //通道设置

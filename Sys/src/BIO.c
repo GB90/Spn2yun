@@ -178,7 +178,8 @@ void IO_Init(void)
 	GPIO_Init(GPIOB, &GPIO_InitStructure); 			  		//根据设定参数初始化GPIO
 	//GPIO_ResetBits(GPIOB,GPIO_Pin_15);						
 	//PC2,5,6,7
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5;				//端口配置
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5;	//端口配置
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;		//
 	GPIO_Init(GPIOC, &GPIO_InitStructure);					//根据设定参数初始化GPIO
 	GPIO_SetBits(GPIOC,GPIO_Pin_2); 						//输出高
     GPIO_SetBits(GPIOC,GPIO_Pin_5); 						//输出高
@@ -639,9 +640,9 @@ void Sample(void)
 #if (POWER_MODE == 1)
 
     PIStus.PHASE = 0x01 & P_PHASE;		//电源相序
-    PIStus.PHASE_LOST = 0x01 & P_PHASELOST;		//电源缺相
+    PIStus.PHASE_LOST = 0x01 & !P_PHASELOST;		//电源缺相
     
-    if(PhaseDir == PIStus.PHASE)                   //相序正序？
+    if(PhaseDir == PIStus.PHASE)                    //相序正序？
     {
         CloseDirection = SetCloseDir;
     }
@@ -912,11 +913,19 @@ void RelayRun(void)
     Po8 = !RelayBit.Relay7;     //OUT7
     Po9 = !RelayBit.Relay8;     //OUT8
     Po10 = !RelayBit.Relay9;    //OUT9
-*/    
-    P_OTSOUT = RelayBit.Relay10;      //監視
+*/ 
+/*
+    P_OTSOUT = RelayBit.Relay10;      //OUT0
     P_ACLSOUT = !RelayBit.Relay1;     //OUT1
     P_AOLSOUT = !RelayBit.Relay2;     //OUT2	
     P_AL = !RelayBit.Relay3;          //OUT3
+    */
+    
+    P_AL = RelayBit.Relay10;           //AL
+    P_AOLSOUT = !RelayBit.Relay1;     //OUT0
+    P_ACLSOUT = !RelayBit.Relay2;     //OUT1
+    P_OTSOUT = !RelayBit.Relay3;      //OUT2	
+    P_CTSOUT = !RelayBit.Relay4;      //OUT3
 }
 
 
