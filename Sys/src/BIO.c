@@ -713,7 +713,7 @@ void Sample(void)
     //错误输入信号处理
     if(AvVal[_IT_C] > 800)					//超过70度报警
     {
-        POStus.AL |= INTTHIGH;			    //内超温
+        //POStus.AL |= INTTHIGH;			    //内超温
     }
     else if(POStus.AL & INTTHIGH)
     {

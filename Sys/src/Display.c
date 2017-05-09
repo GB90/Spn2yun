@@ -38,6 +38,7 @@ u32 WaitTimBi;
 u16 lock;
 u8 BaseSet1_STEP=0;
 u8 StusView;							//状态显示信息(字串序号)
+u8 FreshTimes = 0;
 
 const u16 *InfoDispStrSet[7][2]={				//(16x32 点阵的汉字或图片序列库)
 	Kai_16x32,Fa_16x32, 			            //开阀 1
@@ -243,11 +244,15 @@ void Display(void)
 	DisplayVer();						//开机显示
 	displayMain();						//主工作画面显示及操作
 	if(language )
-		displayEnglishSetupMenu();		//英文设置菜单显示	
+    {
+		displayEnglishSetupMenu();		//英文设置菜单显示
+    }
 	else
-		displaySetupMenu();				//中文设置菜单显示及操作
-	//DisplayTest();						//测试显示
-    ClearMenu();
+	{	
+        displaySetupMenu();				//中文设置菜单显示及操作
+        //DisplayTest();				//测试显示
+        ClearMenu();
+    }
 }
 
 /*********************************************************
@@ -324,7 +329,7 @@ void DisplayVer(void)
 //			testLCD();
 			IWDG_feed();		//喂狗
             
-            for(i=0;i<80;i++)
+            for(i = 0; i < 20; i++)
 			{
                 IWDG_feed();		    //喂狗
 				StartDelay_ms(5);
@@ -340,11 +345,11 @@ void DisplayVer(void)
 //			display_char32x32(4*16,2*10+6,Chr0_32x32,0);
 			display_char32x32(4*16,2*10+3,Chr0_32x32,0);
 			display_char32x32(4*16,3*10+3,Chr1_32x32,0);
-*/            
-            display_char8x16(64,15,"V:0.1.49",0); 				//版本号
-            display_char8x16(80,15,"2016/11/01",0);			//日期
+*/          
+            display_char8x16(64,15,"V:0.2.40b",0); 				//版本号
+            display_char8x16(80,15,"2017/05/09",0);			//日期
 
-			for(i=0;i<35;i++)
+			for(i=0;i<15;i++)
 			{
                 IWDG_feed();		    //喂狗
 				StartDelay_ms(5);
@@ -354,7 +359,7 @@ void DisplayVer(void)
 			clear_screen();
 
 #endif
-			DispStep=DispWorkStus;
+			DispStep = DispWorkStusWait;
 
 			
 			break;
@@ -1125,9 +1130,9 @@ void displayMain(void)
 					ClsKlong;
 					ClsKDn;
 					DispStep=DispWorkStus;
+                    FreshTimes = 0;
 				}
 				break;
-				
 		case	DispWorkStus:
 				//进入阀位(工作)显示
                 dispMain();								//工作主界面显示
@@ -1375,6 +1380,7 @@ void dispSetupMenu(void)
                 DispStep=DispWorkStusWait; 
                 clear_screen();
                 DispSetSel=0;
+                FreshTimes = 0;
                 dispMain();
                 Moto_PARK_Drv;
                 //保存到FLash
@@ -2224,83 +2230,85 @@ void dispMain(void)
         }   
 	}
        
-    //左上角显示状态信息
-//	display_Str16x32(21,12,StusView,0);					
-	display_char16x32(22,12,InfoDispStrSet[StusView][0],0);
+    //左上角显示状态信息				
+    display_char16x32(22,12,InfoDispStrSet[StusView][0],0);
     display_char16x32(22,17,InfoDispStrSet[StusView][1],0);
- 
-	                               
-	//阀位百分值显示
+    
+	if(FreshTimes-- == 0)
+    {                                
+        FreshTimes = 15;
+        
+        //阀位百分值显示
+        display_Num_32x32_LZND(57,0,PK& 0x7fff,4 &DispSetSel);
 
-	display_Num_32x32_LZND(57,0,PK& 0x7fff,4 &DispSetSel);
-	
-	if(PIStus.FK_IN_Pers & 0x8000)
-	{
-		//负值，显示"-"
-		if(BCD_buffer[4])
-		{
-			display_char16x32(30,5,ChrEf_16x32,4 & DispSetSel);
-		}
-		else if(BCD_buffer[3])
-		{
-			display_char16x32(30,5,ChrEf_16x32,4 & DispSetSel);
-		}
-		else if(BCD_buffer[2])
-		{
-			display_char16x32(30,5,ChrEf_16x32,4 & DispSetSel);
-		}
-		else if(BCD_buffer[1])
-		{
-			display_char16x32(30,5,ChrEf_16x32,4 & DispSetSel);
-		}
-		//负值，阀开度进度条显示一个单位
-//		for(l = 0; l < 8; l ++)
-//		{
-//			set_lcd_address(97 + l,3);
-//			display_3pixels(0xffff);
-//		}
-        PIStus.FK_IN_Pers = 0;
-	}
-	else
-	{
-        display_char16x32(30,5,ChrSP_16x32,4 & DispSetSel);//去掉负号
-    }
-    {
-		//正值，阀开度显示8象素宽度进度条
-		for(l = 0; l < 8; l ++)
-		{
-			set_lcd_address(100 + l,3);
-			for(i = 3; i < 50; i ++)	//一行分54个点，每个点占三个象素(即开度最多分54段显示)
-			{
-				if(((i < ((PIStus.FK_IN_Pers & 0x7fff) * 0.47 /100) + 3) && (GetMotoPos() != _InTarget)&&(i>3)) || ((i < ((PIStus.FK_IN_Pers & 0x7fff) * 0.47 /100) + 3) && (GetMotoPos() == _InTarget)&&(i>3)))
-				{
-					display_3pixels(0xffff);
-				}
-				else
-				{
-					display_3pixels(0x0000);
-				}
-			}
-		}
-	}
-
-    //给定值显示3象素宽度进度条
-    for(l = 0; l < 3; l ++)
-    {
-        set_lcd_address(110 + l,3);
-        for(i = 3; i < 50; i ++)	//一行分54个点，每个点占三个象素(即开度最多分54段显示)
+        if(PIStus.FK_IN_Pers & 0x8000)
         {
-            if((i < (((PIStus.VMA_IN_Pers & 0x7fff) * 0.47 /100) +3))&&(i>3))
+            //负值，显示"-"
+            if(BCD_buffer[4])
             {
-                display_3pixels(0xffff);
+                display_char16x32(30,5,ChrEf_16x32,4 & DispSetSel);
             }
-            else
+            else if(BCD_buffer[3])
             {
-                display_3pixels(0x0000);
+                display_char16x32(30,5,ChrEf_16x32,4 & DispSetSel);
+            }
+            else if(BCD_buffer[2])
+            {
+                display_char16x32(30,5,ChrEf_16x32,4 & DispSetSel);
+            }
+            else if(BCD_buffer[1])
+            {
+                display_char16x32(30,5,ChrEf_16x32,4 & DispSetSel);
+            }
+            //负值，阀开度进度条显示一个单位
+    //		for(l = 0; l < 8; l ++)
+    //		{
+    //			set_lcd_address(97 + l,3);
+    //			display_3pixels(0xffff);
+    //		}
+            PIStus.FK_IN_Pers = 0;
+        }
+        else
+        {
+            display_char16x32(30,5,ChrSP_16x32,4 & DispSetSel);//去掉负号
+        }
+        
+        //正值，阀开度显示8象素宽度进度条
+        for(l = 0; l < 8; l ++)
+        {
+            set_lcd_address(100 + l,3);
+            for(i = 3; i < 50; i ++)	//一行分54个点，每个点占三个象素(即开度最多分54段显示)
+            {
+                if(((i < ((PIStus.FK_IN_Pers & 0x7fff) * 0.47 /100) + 3) && (GetMotoPos() != _InTarget)&&(i>3)) || ((i < ((PIStus.FK_IN_Pers & 0x7fff) * 0.47 /100) + 3) && (GetMotoPos() == _InTarget)&&(i>3)))
+                {
+                    display_3pixels(0xffff);
+                }
+                else
+                {
+                    display_3pixels(0x0000);
+                }
+            }
+        }
+        
+
+        //给定值显示3象素宽度进度条
+        for(l = 0; l < 3; l ++)
+        {
+            set_lcd_address(110 + l,3);
+            for(i = 3; i < 50; i ++)	//一行分54个点，每个点占三个象素(即开度最多分54段显示)
+            {
+                if((i < (((PIStus.VMA_IN_Pers & 0x7fff) * 0.47 /100) +3))&&(i>3))
+                {
+                    display_3pixels(0xffff);
+                }
+                else
+                {
+                    display_3pixels(0x0000);
+                }
             }
         }
     }
-
+    
     //显示阀门边框
     for(l = 0; l < 1; l ++)
     {
@@ -2347,6 +2355,7 @@ void dispMain(void)
             if(l)display_3pixels(0x0000);	
         
     }
+    
 	//左下角显示给定值%
 //	hextobcd((PIStus.VMA_IN*1000)/186-30);		//直接 显示4-20MA输入信号	
 //	hextobcd((PIStus.VMA_IN/183)*1000);		//直接 显示4-20MA输入信号	
@@ -2380,8 +2389,10 @@ void dispMain(void)
     displaySymbol_8x16(23,42,0,2 & DispSetSel);
     if(CPUtemp < 0)
     {
-        CPUtemp = CPUtemp*-1;
+        CPUtemp = CPUtemp * (-1);
     }
+#endif
+
 /********************************反馈显示**************************************/    
 	PK1=PIStus.VMA_IN_Pers/10;
 	PK2=PIStus.VMA_IN_Pers/10;
@@ -2414,40 +2425,6 @@ void dispMain(void)
 		dispayNum8x16(39,     39,BCD_buffer[1],2 & DispSetSel);
 	}
     displaySymbol_8x16(40,    42,1,2 & DispSetSel);	
-#else
-    /********************************反馈显示**************************************/    
-	PK1=PIStus.VMA_IN_Pers/10;
-	PK2=PIStus.VMA_IN_Pers/10;
-	PK=(PK1+PK2)/2*10;
-	hextobcd(PK);
-    /**************************************************************************/
-    if(BCD_buffer[4])
-	{
-        //1*16+5,29
-		dispayNum8x16(39,     27,BCD_buffer[4],2 & DispSetSel);
-		dispayNum8x16(39,     30,BCD_buffer[3],2 & DispSetSel);
-		dispayNum8x16(39,     33,BCD_buffer[2],2 & DispSetSel);
-		displaySymbol_8x16(39,36,3,2 & DispSetSel);
-		dispayNum8x16(39,     39,BCD_buffer[1],2 & DispSetSel);
-	}
-	else if((BCD_buffer[3]==0) && (BCD_buffer[4]==0))
-	{
-		displaySymbol_8x16(39,27,2,2 & DispSetSel);
-        displaySymbol_8x16(39,30,2,2 & DispSetSel);
-		dispayNum8x16(39,     33,BCD_buffer[2],2 & DispSetSel);
-		displaySymbol_8x16(39,36,3,2 & DispSetSel);
-		dispayNum8x16(39,     39,BCD_buffer[1],2 & DispSetSel);
-	}
-	else
-	{
-		displaySymbol_8x16(39,27,2,2 & DispSetSel);	
-        dispayNum8x16(39,     30,BCD_buffer[3],2 & DispSetSel);
-		dispayNum8x16(39,     33,BCD_buffer[2],2 & DispSetSel);
-		displaySymbol_8x16(39,36,3,2 & DispSetSel);
-		dispayNum8x16(39,     39,BCD_buffer[1],2 & DispSetSel);
-	}
-    displaySymbol_8x16(40,    42,1,2 & DispSetSel);	
-#endif
 /******************************************************************************/
 	
     //右下角
@@ -3453,9 +3430,7 @@ void disp_Set1_3_x(u16 Sel)
             
             if(Rs485Wayset)
 			{
-#if (MB_MODE == 0)
 				display_char14x14(jump+line*3+4,5*5+_coloffset-3,Shi3_14x14,0x04 & Sel);
-#endif
 			}
 			else
 			{
@@ -5710,8 +5685,10 @@ void AdvancedSet(void)
     ElectronicBrakeSet();
     LockedRotorTimeSet();
     
-#if (MB_MODE == 0)    
+#if (MB_MODE < 2)    
     Rs485Set();
+#else    
+    Rs485Wayset = 0;
 #endif
     
     MbAddrSet();
@@ -5926,9 +5903,9 @@ void SftwareVersion(void)
 		display_char14x14(jump+line*3,1*5+_coloffset_1_B,Jian1_14x14,0);
 		display_char14x14(jump+line*3,2*5+_coloffset_1_B,Ban_14x14,0);
 		display_char14x14(jump+line*3,3*5+_coloffset_1_B,Ben_14x14,0);
-		
-		display_char8x16(jump+line*4,15,"V:0.1.49",0); 				//版本号
-		display_char8x16(jump+line*5,15,"2016/11/01",0);			//日期
+
+        display_char8x16(jump+line*4,15,"V:0.2.40b",0); 				//版本号
+        display_char8x16(jump+line*5,15,"2017/05/09",0);			//日期
 
 		if(KeyHoldStus || KeyHoldStusA)
 		{
@@ -5971,7 +5948,7 @@ u8 Trg(u8 trg)
 
 void ClearMenu(void)
 { 
-    if(Trg(RolStus))
+    if(Trg(RolStus) && (DispStep > DispWorkStus))
     {
         //clear_screen();
         ClearLine_14x14(jump+line*0);

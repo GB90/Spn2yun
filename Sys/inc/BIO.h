@@ -119,6 +119,6 @@ void Sample(void);
 void IO_Init(void);
 u8 GetMotoPos(void);
 u8 IsEncoderZero(u8 Dir);
-
+extern u16 GetMedianNum(u16 *bArray, u8 iFilterLen);
 #endif
 

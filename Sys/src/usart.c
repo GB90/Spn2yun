@@ -15,8 +15,11 @@ u32 MbTimer;
 void ModBusRun(void);
 static void  ModBusFuc(void);
 static void  ModBusRp(void);
-void  ModBusFuc03(void);
-void  ModBusFuc06(void);
+static void  ModBusFuc03(void);
+#if (MB_MODE == 0)
+static void  ModBusFuc06(void);
+#endif
+
 
 static const u8 CRCHi[] = {
 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41,
@@ -362,7 +365,7 @@ static void  ModBusFuc03(void)//¶Á
 }
 #endif
 #if (MB_MODE == 0)
-void  ModBusFuc06(void)//Ð´
+static void  ModBusFuc06(void)//Ð´
 {
     WB  WbTemp;
      

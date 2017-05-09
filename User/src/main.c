@@ -34,7 +34,7 @@ int main(void)
 	TIM3_PWM_Init(4095,150);	//PWM频率=100hz
 	TIM1_Int_Init(1000,360);
 	IO_Init();
-	IWDG_init();				//看门狗初始化
+	//IWDG_init();				//看门狗初始化
 	//GetDataFromFlash();		//恢复已经保存的数据
 	Display_Init();
 	clear_screen();

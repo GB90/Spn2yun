@@ -5,7 +5,7 @@
 #define ADC_CH_TEMP  	ADC_Channel_16 		//温度传感器通道
 
 //求平均值的次数定义
-#define	_adavtimes	1
+#define	_adavtimes	2
 
 //输入量代号
 #define _WD			0						//温度
