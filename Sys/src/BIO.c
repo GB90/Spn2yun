@@ -654,7 +654,7 @@ void Sample(void)
     //И±ПајмІв
     if(PIStus.PHASE_LOST)
     {
-        POStus.AL |= PHASELOST;			    //И±Па
+        //POStus.AL |= PHASELOST;			    //И±Па
     }
     else if(POStus.AL & PHASELOST)
     {
