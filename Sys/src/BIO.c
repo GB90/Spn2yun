@@ -834,11 +834,11 @@ void Sample(void)
         }   
     }
     /***********************通讯处理****************************/
-    if(Moto_REV_Chk)
+    if(TorDir == 2)
     {
         RMbData.sMbData.MbSwitch = 1;
     }
-    else if(Moto_FWD_Chk)
+    else if(TorDir == 1)
     {
         RMbData.sMbData.MbSwitch = 2;
     }
