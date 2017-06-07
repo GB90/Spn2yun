@@ -83,7 +83,7 @@ typedef struct
     u16 MbCPUTemp;         //CPU温度
     u16 MbVmaPer;          //模拟量百分比
     u16 MbSN;              //序列号
-    u16 MbTimer;           //生产日期
+    u16 MbTime;           //生产日期
     u16 MbVer;             //版本
     u16 MbAl;             //错误报警
 }SMBDATA;                  //Modbus写入参数缓冲区

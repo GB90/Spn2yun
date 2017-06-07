@@ -514,7 +514,7 @@ void  LockedRotor(void)
             */
             if(Moto_FWD_Chk) 
             {
-                if(1 == CloseDirection)
+                if(1 == SetCloseDir)
                 {
                     POStus.AL |= OPENBLOCK;
                 }
@@ -525,7 +525,7 @@ void  LockedRotor(void)
             }
             else if(Moto_REV_Chk)
             {
-				if(1 == CloseDirection)
+				if(1 == SetCloseDir)
 				{
 					POStus.AL |= SHUTBLOCK;
 				}
@@ -616,7 +616,6 @@ void JogRun(void)
             if((GetMotoPos() < _MoreLdU))	//点动状态每次转	50
             {
                 Moto_FWD_Drv;			    //正转
-                                            //电机转动了，需要刹车，置位刹车状态机
                 stopflag = 1;				//电机转动了，需要刹车，置位刹车状态机
             }            
         }
@@ -833,10 +832,11 @@ fun :			选择远程开关量时 displayMain状态执行命令
 void RemoteQquantitydisplay(void)
 {
 //	u8 static stc = 0;	//远程/本地状态机
-	u8 static sta = 0 ;	//BC状态机
-	u8 static stic = 0;
+//	static u8 sta = 0 ;	//BC状态机
+	static u8 stic = 0;
     static u8 TimerFlag;
-	 if(PIStus.IN_BC==1&&sta)					//远程自动按键
+	/*
+    if(PIStus.IN_BC==1&&sta)					//远程自动按键
 	 {
 		stic++;
 		if(stic>=3)
@@ -849,6 +849,7 @@ void RemoteQquantitydisplay(void)
 	 {
 		sta=1;
 	 }
+     */
 //****************************************远程 /本地切换	 
 //	 if(PIStus.IN_RCL==1&&stc)			
 //	 {
@@ -1009,11 +1010,11 @@ void RemoteQquantitydisplay(void)
 		if(PIStus.IN_BC)								//远程自动
 		{
 			stic = 0;
-			if(!PIStus.IN_OPEN && PIStus.IN_SHUT)	
+			if(PIStus.IN_OPEN && !PIStus.IN_SHUT)	
 			{
 				stic = 1;
 			}
-			else if(PIStus.IN_OPEN && !PIStus.IN_SHUT)
+			else if(!PIStus.IN_OPEN && PIStus.IN_SHUT)
 			{
 				stic = 2;
 			}
@@ -1023,7 +1024,7 @@ void RemoteQquantitydisplay(void)
             }
 			if(stic == 1)
 			{						//开到位
-				if(GetMotoPos() <_MoreLdU  ) 
+				if(GetMotoPos() <_MoreLdU) 
 				{
 					Moto_FWD_Drv;//正转
 				}
@@ -1527,7 +1528,7 @@ void dispSetMenu1_1(void)
                     ClosewayTemp = Closeway | 0x80;         //保存原有的关方式
                     Closeway = 1;                           //设定行程时改为力矩关，无电子限位
 #if (POWER_MODE == 1)                    
-                    PhaseDir = PIStus.PHASE;                //刷新相序
+//                    PhaseDir = PIStus.PHASE;                //刷新相序
 #endif
                 }
                 if(DispSetSel == 0x001)
@@ -2195,9 +2196,9 @@ void dispMain(void)
             LED2 = 1;
             LED3 = 1;
            
-            if(Moto_FWD_Chk) 
+            if(TorDir == 1) 
             {
-                if(1 == CloseDirection)
+                if(1 == SetCloseDir)
                 {
                     StusView=_Kaifa;
                 }
@@ -2207,9 +2208,9 @@ void dispMain(void)
                 }
                 LockedRotor();	
             }
-            else if(Moto_REV_Chk)
+            else if(TorDir == 2)
             {
-                if(1 == CloseDirection)
+                if(1 == SetCloseDir)
                 {
                     StusView=_BiFa;
                 }
@@ -2480,11 +2481,11 @@ void dispMain(void)
 #if (POWER_MODE == 1 && POWER_MODE_DISP == 1)//测试显示内容
     if(1 == CloseDirection)
     {
-        display_char14x14(24,35,Zheng_14x14,0);
+        display_char14x14(0,0,Zheng_14x14,0);
     }
     else
     {
-        display_char14x14(24,35,Fan_14x14,0);
+        display_char14x14(0,0,Fan_14x14,0);
     }
 #endif
     
@@ -3570,7 +3571,7 @@ void disp_Set1_4_x(u16 Sel)
 			display_char14x14(jump+line*2+2,1*5+_coloffset_1_4-3,Ju_14x14,0x02 & Sel);
 			display_char14x14(jump+line*2+2,2*5+_coloffset_1_4-3,Jian3_14x14,0x02 & Sel);
 			display_char14x14(jump+line*2+2,3*5+_coloffset_1_4-3,Ce_14x14,0x02 & Sel);	
-			if(1 == CloseDirection)
+			if(1 == SetCloseDir)
 			{
 				if(PIStus.OTS)
 				{
@@ -5620,8 +5621,8 @@ void DefaultSet(void)		//恢复出厂
             CInLmdD=746;			    //给定C下限
             VInLmdU=4095;				//给定V上限
             VInLmdD=0;				    //给定V下限
-            OutCLmdU=4095;				//输出上限
-            OutCLmdD=0; 				//输出下限
+            OutCLmdU=3375;				//输出上限
+            OutCLmdD=669; 				//输出下限
             OutVLmdU=4095;				//输出上限
             OutVLmdD=0; 				//输出下限
             PosAccuracy=100;			//阀位精度(默认1.00)
@@ -5728,6 +5729,32 @@ u8 GetMotoPos(void)
 		{
 			PosTemp = _MoreLdU;
 		}
+        
+        if(Closeway)//力矩关
+        {
+            if(1 == SetCloseDir)
+            {  
+                if(PIStus.CTS || PIStus.ACLS)  
+                {
+                    PosTemp = _LessLdD;
+                }
+                else if(PIStus.OTS|| PIStus.AOLS)
+                {
+                    PosTemp = _MoreLdU;
+                }
+            }
+            else
+            {
+                if(PIStus.CTS || PIStus.ACLS)  
+                {
+                    PosTemp = _MoreLdU;
+                }
+                else if(PIStus.OTS || PIStus.AOLS)
+                {
+                    PosTemp = _LessLdD;
+                }
+            }
+        }
 		//	else if((PIStus.FK_IN_Pers <= (5000  + PosAccuracy)) && (PIStus.FK_IN_Pers	>= (5000 - PosAccuracy)))
 		//		{
 		//		return _InMid;

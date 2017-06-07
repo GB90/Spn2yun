@@ -1,6 +1,7 @@
 #include "Def.h"
 #include "BIO.h"
 
+u8 TorDir = 0;
 u16 ChanlCnt;					//输出通道轮换设定
 u16 ChSel[] = {9,8,7,6,5,4,3,2,1,0}; //10个输出口的输出通道号。即默认值 : MRTS ChS = 9;MD ChS = 8;SHUTRUN ChS = 7;OPENRUN ChS = 6;
 							    //RCL ChS = 5;CTSOUT ChS = 4;OTSOUT ChS = 3;ACLSOUT ChS = 2;AOLSOUT ChS = 1;AL ChS = 0;
@@ -233,12 +234,25 @@ void Output(void)
 //    POStus.RCL = PIStus.IN_RCL;                 //开关量，远程本地输出 RmLcDisSel
 //    POStus.SHUTRUN = PIStus.IN_SHUT;            //开关量，关运行输出
 //    POStus.OPENRUN = PIStus.IN_OPEN;            //开关量，开运行输出
-    
-    if(Closeway)                                //通过力矩开关判断是否到位
+
+    if(SetCloseDir == CloseDirection)
     {
-        if(1 == CloseDirection)                      //正向
+        if(Moto_FWD_Chk)TorDir = 1;
+        else if(Moto_REV_Chk)TorDir = 2;
+        else TorDir = 0;
+    }
+    else
+    {
+        if(Moto_FWD_Chk)TorDir = 2;
+        else if(Moto_REV_Chk)TorDir = 1;
+        else TorDir = 0;
+    }
+        
+    if(Closeway)                                //通过力矩开关判断是否到位
+    { 
+        if(1 == SetCloseDir)                      //正向
 		{
-            if((PIStus.CTS || (POStus.AL & SHUTBLOCK)) && Moto_REV_Chk)        //反转到极限? 
+            if((PIStus.CTS || (POStus.AL & SHUTBLOCK)) && (TorDir == 2))        //反转到极限? 
             {
                 POStus.AL &= ~OPENBLOCK;
                 if(electronicbrake)                 //是否开启刹车功能
@@ -251,7 +265,7 @@ void Output(void)
                 }
             }
 
-            if((PIStus.OTS || (POStus.AL & OPENBLOCK)) && Moto_FWD_Chk)         //正转到极限?
+            if((PIStus.OTS || (POStus.AL & OPENBLOCK)) && (TorDir == 1))         //正转到极限?
             {
                 POStus.AL &= ~SHUTBLOCK;
                 if(electronicbrake)                 //是否开启刹车功能
@@ -266,7 +280,7 @@ void Output(void)
         }
         else
         {
-            if((PIStus.CTS || (POStus.AL & SHUTBLOCK)) && Moto_FWD_Chk)        //反转到极限? 
+            if((PIStus.CTS || (POStus.AL & SHUTBLOCK)) && (TorDir == 1))        //反转到极限? 
             {
                 POStus.AL &= ~OPENBLOCK;
                 if(electronicbrake)                 //是否开启刹车功能
@@ -279,7 +293,7 @@ void Output(void)
                 }
             }
 
-            if((PIStus.OTS || (POStus.AL & OPENBLOCK)) && Moto_REV_Chk)         //正转到极限?
+            if((PIStus.OTS || (POStus.AL & OPENBLOCK)) && (TorDir == 2))         //正转到极限?
             {
                 POStus.AL &= ~SHUTBLOCK;
                 if(electronicbrake)                 //是否开启刹车功能
@@ -291,32 +305,14 @@ void Output(void)
                     Moto_PARK_Drv;                  //电机停止
                 }
             }
-        }
-            
-        if(PIStus.CTS)
-        {           
-            RelayByte.Byte.RelayShut = 1;
-        }
-        else
-        {
-            RelayByte.Byte.RelayShut = 0;
-        }
-
-        if(PIStus.OTS)
-        {
-            RelayByte.Byte.RelayOpen = 1;
-        }
-        else
-        {
-            RelayByte.Byte.RelayOpen = 0;
         }
 	}
 	else										//通过限位开关或阀位判断是否到位
 	{
-        if(1 == CloseDirection)                      //正向
+        if(1 == SetCloseDir)                      //正向
 		{
             if((PIStus.CTS || PIStus.ACLS || ((PIStus.FK_IN_Pers & 0x7fff) <= PosAccuracy) \
-                || (POStus.AL & SHUTBLOCK) || (PIStus.FK_IN_Pers & 0x8000)) && Moto_REV_Chk)			//关到极限?
+                || (POStus.AL & SHUTBLOCK) || (PIStus.FK_IN_Pers & 0x8000)) && (TorDir == 2))			//关到极限?
 			{				
 				POStus.AL &= ~OPENBLOCK;
                 if(electronicbrake)				//是否开启刹车功能
@@ -329,7 +325,7 @@ void Output(void)
 				}
 			}
 			else if((PIStus.OTS || PIStus.AOLS \
-                || (POStus.AL & OPENBLOCK) || ((PIStus.FK_IN_Pers & 0x7fff) >= (10000 - PosAccuracy))) && Moto_FWD_Chk)		//开转到极限?
+                || (POStus.AL & OPENBLOCK) || ((PIStus.FK_IN_Pers & 0x7fff) >= (10000 - PosAccuracy))) && (TorDir == 1))		//开转到极限?
 			{
                 POStus.AL &= ~SHUTBLOCK;
 				if(electronicbrake)				//是否开启刹车功能
@@ -345,7 +341,7 @@ void Output(void)
 		else
 		{
 			if((PIStus.OTS || PIStus.AOLS || ((PIStus.FK_IN_Pers & 0x7fff) <= PosAccuracy) \
-                || (POStus.AL & SHUTBLOCK) || (PIStus.FK_IN_Pers & 0x8000)) && Moto_FWD_Chk) 			//关到极限?
+                || (POStus.AL & SHUTBLOCK) || (PIStus.FK_IN_Pers & 0x8000)) && (TorDir == 1)) 			//关到极限?
 			{
 				POStus.AL &= ~OPENBLOCK;
                 if(electronicbrake)				//是否开启刹车功能
@@ -358,7 +354,7 @@ void Output(void)
 				}
 			}
 			else if((PIStus.CTS || PIStus.ACLS \
-                 || (POStus.AL & OPENBLOCK) || ((PIStus.FK_IN_Pers & 0x7fff)>= (10000 - PosAccuracy))) && Moto_REV_Chk)		//开转到极限?
+                 || (POStus.AL & OPENBLOCK) || ((PIStus.FK_IN_Pers & 0x7fff)>= (10000 - PosAccuracy))) && (TorDir == 2))		//开转到极限?
 			{
 				POStus.AL &= ~SHUTBLOCK;
                 if(electronicbrake)				//是否开启刹车功能
@@ -385,9 +381,9 @@ void Output(void)
         }
     }
         
-	if(1 == CloseDirection)                              //正向
+	if(1 == SetCloseDir)                              //正向
     {
-        if(Moto_FWD_Chk)		                    //正转无报警状态
+        if(TorDir == 1)		                    //正转无报警状态
         {
             RelayByte.Byte.RelayNowOpen = 1;        //会被远程开关信号清零
         }
@@ -395,7 +391,7 @@ void Output(void)
         {
             RelayByte.Byte.RelayNowOpen = 0;
         }
-        if(Moto_REV_Chk)			                //反转无报警状态
+        if(TorDir == 2)			                //反转无报警状态
         {
             RelayByte.Byte.RelayNowShut = 1;
         }
@@ -422,10 +418,30 @@ void Output(void)
                 RelayByte.Byte.RelayOpen = 0;
             }
         }
+        else
+        {
+            if(PIStus.CTS)
+            {           
+                RelayByte.Byte.RelayShut = 1;
+            }
+            else
+            {
+                RelayByte.Byte.RelayShut = 0;
+            }
+
+            if(PIStus.OTS)
+            {
+                RelayByte.Byte.RelayOpen = 1;
+            }
+            else
+            {
+                RelayByte.Byte.RelayOpen = 0;
+            }
+        }
     }
     else
     {
-        if(Moto_FWD_Chk)		                    //正转无报警状态
+        if(TorDir == 2)		                    //正转无报警状态
         {
             RelayByte.Byte.RelayNowShut = 1;
         }
@@ -433,7 +449,7 @@ void Output(void)
         {
             RelayByte.Byte.RelayNowShut = 0;
         }
-        if(Moto_REV_Chk)			                //反转无报警状态
+        if(TorDir == 1)			                //反转无报警状态
         {
             RelayByte.Byte.RelayNowOpen = 1;
         }
@@ -457,6 +473,26 @@ void Output(void)
             {
                 RelayByte.Byte.RelayShut = 0;
                 RelayByte.Byte.RelayOpen = 0;
+            }
+        }
+        else
+        {
+            if(PIStus.CTS)
+            {           
+                RelayByte.Byte.RelayOpen = 1;
+            }
+            else
+            {
+                RelayByte.Byte.RelayOpen = 0;
+            }
+
+            if(PIStus.OTS)
+            {
+                RelayByte.Byte.RelayShut = 1;
+            }
+            else
+            {
+                RelayByte.Byte.RelayShut = 0;
             }
         }
     }
@@ -581,7 +617,7 @@ void Output(void)
     
     if(1 == (POStus.M_SW & 0x00ff))
     {
-        P_M_OS = 0;        //电机反转输出
+        P_M_OS = 0;
         if(WaitMoto > 200)
         {
             P_M_SW = 1;
@@ -589,7 +625,7 @@ void Output(void)
     }
     else if(1 == (POStus.M_OS & 0x00ff))
     {
-        P_M_SW = 0;        //电机反转输出
+        P_M_SW = 0;
         if(WaitMoto > 200)
         {
             P_M_OS = 1;
@@ -642,7 +678,7 @@ void Sample(void)
     PIStus.PHASE = 0x01 & P_PHASE;		//电源相序
     PIStus.PHASE_LOST = 0x01 & !P_PHASELOST;		//电源缺相
     
-    if(PhaseDir == PIStus.PHASE)                    //相序正序？
+    if(1 == PIStus.PHASE)                    //相序正序？
     {
         CloseDirection = SetCloseDir;
     }
@@ -666,7 +702,7 @@ void Sample(void)
     //信号处理
     if(PIStus.CTS)						//闭力矩信号
     {
-        if(1 == CloseDirection)
+        if(1 == SetCloseDir)
         {
             POStus.AL |= ERRCTS; 		//超下行程报警，全闭
         }
@@ -677,7 +713,7 @@ void Sample(void)
     }
     else
     {
-        if(1 == CloseDirection)
+        if(1 == SetCloseDir)
         {
             POStus.AL &= ~ERRCTS; 		//超下行程报警，全闭
         }
@@ -689,7 +725,7 @@ void Sample(void)
 
     if(PIStus.OTS) 						        //开力矩信号
     {
-        if(1 == CloseDirection)
+        if(1 == SetCloseDir)
         {
             POStus.AL |= ERROTS;
         }
@@ -700,7 +736,7 @@ void Sample(void)
     }
     else
     {
-        if(1 == CloseDirection)
+        if(1 == SetCloseDir)
         {
             POStus.AL &= ~ERROTS;
         }
@@ -828,7 +864,7 @@ void Sample(void)
     RMbData.sMbData.MbCPUTemp = CPUtemp;
     RMbData.sMbData.MbVmaPer = PIStus.VMA_IN_Pers;
     RMbData.sMbData.MbSN = 123;
-    RMbData.sMbData.MbTimer = uTimer.UTimer;
+    RMbData.sMbData.MbTime = uTimer.UTimer;
     RMbData.sMbData.MbVer = 456;
     RMbData.sMbData.MbAl = POStus.AL;
     
@@ -839,7 +875,7 @@ void Sample(void)
         {
             PIStus.VMA_IN_Pers = WMbData.sMbData.MbVavlePer;
         }
-        POStus.AL &= ~VMALOW;
+        POStus.AL &= ~MBONLINE;
         if(MbStatus.MbInData)
         {
             SetCloseDir = WMbData.sMbData.MbCloseDir;
@@ -864,7 +900,7 @@ void Sample(void)
     {
         if(Rs485Way)//启动了总线控制
         {
-            POStus.AL |= VMALOW;//丢信号
+            POStus.AL |= MBONLINE;//掉线
         }
     }
 #endif        

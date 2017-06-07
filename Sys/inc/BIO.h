@@ -27,7 +27,7 @@
 #define Moto_FWD_Chk		(((POStus.M_SW & 0xff) ==0) && (POStus.M_OS & 0xff))		//正转状态
 #define Moto_REV_Chk		((POStus.M_SW & 0xff) && ((POStus.M_OS & 0xff)==0))		    //反转状态
 #define Moto_PARK_Chk		(((POStus.M_SW & 0xff) ==0)&&((POStus.M_OS & 0xff) ==0))    //停止状态
-#define Moto_STOP_Chk		(( POStus.M_SW & 0xff )&&(POStus.M_OS & 0xff))  		 	//刹车状态
+#define Moto_STOP_Chk		((POStus.M_SW & 0xff )&&(POStus.M_OS & 0xff))  		 	//刹车状态
 
 //阀门位置查询号
 #define _LessLdD		0	//有效下限之外
@@ -93,13 +93,13 @@ typedef struct
 	u8 Relay15:1;
 }RELAY_BIT;
 
-
+extern u8 TorDir;
 extern u16 ChanlCnt;
 extern u16 ChSel[]; //10个输出口的输出通道号。即默认值 : MRTS ChS = 9;MDChS = 8;SHUTRUN ChS = 7;OPENRUN ChS = 6;
 				//RCL ChS = 5;CTSOUT ChS = 4;OTSOUT ChS = 3;ACLSOUT ChS = 2;AOLSOUT ChS = 1;AL ChS = 0;
+extern u8 TorDir;
 extern u16 WaitMoto;
 extern u16 PhaseDir;
-
 extern u16 MRTSChS;
 extern u16 MDChS;
 extern u16 SHUTRUNChS;

@@ -216,7 +216,7 @@ void ModBusRun(void)
 {
     WB  WbTemp;
     /*****************ºÏ≤‚ «∑ÒµÙœﬂ*****************/
-#if (MB_MODE == 0)
+#if (MB_LOST == 1)
     if(MbTimer == MB_TIMEOUT)
     {
         MbStatus.MbOnline = 0;
@@ -263,7 +263,7 @@ void ModBusRun(void)
             case R_END:
                 MbFsm = R_CRC;
                 MbStatus.MbRicved = 0;
-#if (MB_MODE == 1)
+#if (MB_LOST == 1)
                 MbStatus.MbOnline = 0;
 #endif
                 break;

@@ -273,8 +273,8 @@ void GetDataFromFlash(void)
         CInLmdD=746;			    //给定C下限
         VInLmdU=4095;				//给定V上限
         VInLmdD=0;				    //给定V下限
-        OutCLmdU=4095;				//输出上限
-        OutCLmdD=0; 				//输出下限
+        OutCLmdU=3375;				//输出上限
+        OutCLmdD=669; 				//输出下限
         OutVLmdU=4095;				//输出上限
         OutVLmdD=0; 				//输出下限
         PosAccuracy=100;			//阀位精度(默认1.00)
